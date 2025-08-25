@@ -255,6 +255,19 @@
             <small style="color: #666;">Your API key is stored locally and never sent to our servers</small>
         </div>
 
+        <div class="card-count-section" style="margin-bottom: 30px; padding: 20px; background: #f8f9fa; border-radius: 15px;">
+            <label for="cardCount" style="display: block; margin-bottom: 10px; font-weight: 600; color: #333;">
+                <strong>Number of Flashcards to Generate</strong>
+            </label>
+            <select id="cardCount" style="width: 100%; padding: 15px; border: 2px solid #e9ecef; border-radius: 10px; font-size: 16px; background: white; cursor: pointer;">
+                <option value="5">5 cards</option>
+                <option value="10" selected>10 cards</option>
+                <option value="15">15 cards</option>
+                <option value="20">20 cards</option>
+                <option value="25">25 cards</option>
+            </select>
+        </div>
+
         <div class="input-section">
             <div class="input-tabs">
                 <button class="tab-button active" onclick="switchTab('text')">Text Input</button>
@@ -389,6 +402,7 @@
         async function generateFlashcards() {
             const apiKey = document.getElementById('apiKey').value.trim();
             const textInput = document.getElementById('textInput').value.trim();
+            const cardCount = document.getElementById('cardCount').value;
 
             if (!apiKey) {
                 showError('Please enter your OpenAI API key');
@@ -416,7 +430,7 @@
                         model: 'gpt-3.5-turbo',
                         messages: [{
                             role: 'user',
-                            content: `Create Anki flashcards from the following text. Format each flashcard as "Question<tab>Answer" with one flashcard per line. Focus on key concepts, definitions, and important facts. Make questions clear and concise. Here's the text:\n\n${textInput}`
+                            content: `Create exactly ${cardCount} Anki flashcards from the following text. Format each flashcard as "Question<tab>Answer" with one flashcard per line. Focus on the most important concepts, definitions, and key facts. Make questions clear and concise. Generate exactly ${cardCount} cards, no more, no less. Here's the text:\n\n${textInput}`
                         }],
                         max_tokens: 2000,
                         temperature: 0.7
@@ -424,6 +438,9 @@
                 });
 
                 if (!response.ok) {
+                    if (response.status === 429) {
+                        throw new Error('Rate limit exceeded. Please wait a moment and try again, or upgrade your OpenAI plan for higher limits.');
+                    }
                     throw new Error(`API Error: ${response.status} ${response.statusText}`);
                 }
 
